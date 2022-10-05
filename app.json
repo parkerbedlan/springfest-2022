@@ -1,0 +1,13 @@
+{
+  "name": "Springfest",
+  "description": "A website for managing TU Springfest's student org competition",
+  "keywords": ["nodejs", "blitz"],
+  "repository": "https://github.com/parkerbedlan/springfest",
+  "scripts": {
+    "dokku": {
+      "predeploy": "npm run migrate"
+    }
+  },
+  "image": "parkerbedlan/springfest",
+  "addons": ["dokku-postgres"]
+}

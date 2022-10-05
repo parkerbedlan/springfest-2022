@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --------------------------------------
+
+model User {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String?
+  email          String   @unique
+  hashedPassword String?
+  role           String   @default("USER")
+
+  tokens   Token[]
+  sessions Session[]
+}
+
+model Session {
+  id                 Int       @id @default(autoincrement())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+}
+
+model Token {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hashedToken String
+  type        String
+  // See note below about TokenType enum
+  // type        TokenType
+  expiresAt   DateTime
+  sentTo      String
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  @@unique([hashedToken, type])
+}
+
+// NOTE: It's highly recommended to use an enum for the token type
+//       but enums only work in Postgres.
+//       See: https://blitzjs.com/docs/database-overview#switch-to-postgre-sql
+// enum TokenType {
+//   RESET_PASSWORD
+// }
+
+model Student {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  id   Int    @id @default(autoincrement())
+  tuid Int    @unique
+  name String
+
+  orgs       Org[]
+  teams      Team[]
+  activities Activity[]
+}
+
+model Org {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name   String @unique
+  points Int    @default(0)
+
+  members Student[]
+  teams   Team[]
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+  date String
+  // possibly update this to postgresql DATE, or just use a regex to make sure it fits a date format and convert between types
+
+  attendees Student[]
+  teams     Team[]
+}
+
+model Team {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name      String  @unique
+  placement Int?
+  present   Boolean @default(false)
+
+  members    Student[]
+  org        Org       @relation(fields: [orgId], references: [id])
+  activity   Activity  @relation(fields: [activityId], references: [id])
+  orgId      Int
+  activityId Int
+}
